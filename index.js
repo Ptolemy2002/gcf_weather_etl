@@ -1,6 +1,12 @@
 const {Storage} = require("@google-cloud/storage");
 const csv = require("csv-parser");
 
+function printDict(row) {
+    Object.keys(row).forEach((key) => {
+        console.log(`${key}: ${row[key]}`)
+    })
+}
+
 exports.readObservation = (file, context) => {
     // console.log(`  Event: ${context.eventId}`);
     // console.log(`  Event Type: ${context.eventType}`);
@@ -16,9 +22,9 @@ exports.readObservation = (file, context) => {
         })
         .pipe(csv())
             .on("data", (row) => {
-                console.log(row);
+                printDict(row);
             })
             .on("end", () => {
-                console.log("End!")
+                console.log("End!");
             });
 }

@@ -1,5 +1,10 @@
 const {Storage} = require("@google-cloud/storage");
 const csv = require("csv-parser");
+const {BigQuery} = require("@google-cloud/bigquery");
+
+const bq = new BigQuery();
+const datasetId = "weather_etl";
+const tableId = "observations";
 
 function printDict(row) {
     Object.keys(row).forEach((key) => {
@@ -7,11 +12,45 @@ function printDict(row) {
     })
 }
 
+function transformData(data, intKeys=[], ignoreKeys=[]) {
+    const result = {};
+
+    Object.keys(data).forEach((key) => {
+        if (ignoreKeys.includes(key)) return
+        
+        const value = data[key];
+        if (!isNaN(value)) {
+            if (value.includes("-9999")) {
+                result[key] = null;
+            } else if (intKeys.includes(key)) {
+                result[key] = parseInt(value);
+            } else {
+                result[key] = parseFloat(value) / 10
+            }
+        } else {
+            result[key] = value;
+        }
+    });
+
+    return result
+}
+
+async function writeToBQ(obj) {
+    await bq.dataset(datasetId)
+        .table(tableId)
+        .insert([obj])
+        .then(() => {
+            console.log(`Inserted ${obj}`)
+        })
+        .catch(console.error)
+    ;
+}
+
 exports.readObservation = (file, context) => {
-    // console.log(`  Event: ${context.eventId}`);
-    // console.log(`  Event Type: ${context.eventType}`);
-    // console.log(`  Bucket: ${file.bucket}`);
-    // console.log(`  File: ${file.name}`);
+    console.log(`  Event: ${context.eventId}`);
+    console.log(`  Event Type: ${context.eventType}`);
+    console.log(`  Bucket: ${file.bucket}`);
+    console.log(`  File: ${file.name}`);
 
     const gcs = new Storage();
     const dataFile = gcs.bucket(file.bucket).file(file.name);
@@ -21,8 +60,12 @@ exports.readObservation = (file, context) => {
             console.error(e);
         })
         .pipe(csv())
-            .on("data", (row) => {
+            .on("data", async (row) => {
                 printDict(row);
+                await writeToBQ({
+                    station: file.name.split(".")[0],
+                    ...transformData(row, ["year", "month", "day", "hour", "winddirection", "sky"], ["station"])
+                });
             })
             .on("end", () => {
                 console.log("End!");

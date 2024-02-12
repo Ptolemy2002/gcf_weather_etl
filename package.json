@@ -6,7 +6,7 @@
   },
 
   "scripts": {
-    "project scratch": "gcloud config set project sp24-cit412-pbhenson-scratch",
+    "scratch": "gcloud config set project sp24-cit412-pbhenson-scratch",
     "deploy": "gcloud functions deploy weather_etl --runtime nodejs18 --trigger-event google.storage.object.finalize --entry-point readObservation --trigger-resource sp34-cit424-pbhenson-weather-etl"
   }
 }

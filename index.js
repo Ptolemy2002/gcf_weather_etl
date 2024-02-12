@@ -12,12 +12,10 @@ function printDict(row) {
     })
 }
 
-function transformData(data, intKeys=[], ignoreKeys=[]) {
+function transformData(data, intKeys=[]) {
     const result = {};
 
     Object.keys(data).forEach((key) => {
-        if (ignoreKeys.includes(key)) return
-        
         const value = data[key];
         if (!isNaN(value)) {
             if (value.includes("-9999")) {
@@ -63,8 +61,8 @@ exports.readObservation = (file, context) => {
             .on("data", async (row) => {
                 printDict(row);
                 await writeToBQ({
-                    station: file.name.split(".")[0],
-                    ...transformData(row, ["year", "month", "day", "hour", "winddirection", "sky"], ["station"])
+                    ...transformData(row, ["year", "month", "day", "hour", "winddirection", "sky"]),
+                    station: file.name.split(".")[0]
                 });
             })
             .on("end", () => {

@@ -3,5 +3,10 @@
     "@google-cloud/bigquery": "^7.4.0",
     "@google-cloud/storage": "^7.7.0",
     "csv-parser": "^3.0.0"
+  },
+
+  "scripts": {
+    "setProject": "gcloud config set project sp24-cit412-pbhenson-scratch",
+    "deploy": "gcloud functions deploy weather_etl --runtime nodejs18 --trigger-event google.storage.object.finalize --entry-point readObservation --trigger-resource sp34-cit424-pbhenson-weather-etl"
   }
 }
